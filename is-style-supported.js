@@ -9,35 +9,35 @@
 
 (function isStyeSupportedModule(window) {
     var _element = window.document.createElement('div');
-    var _prefixes = ['Webkit', 'Moz', 'O', 'ms'];
+
+    // Check the native methods first; otherwise, return a generic function that returns false
+    var _checkNativeSupport = (function nativeSupportCSS(window) {
+
+        if (window.hasOwnProperty('CSS') && typeof window.CSS.supports === 'function') {
+            return window.CSS.supports;
+        }
+
+        // Check for Opera's native method. Found only in older versions of Opera
+        if (typeof window.supportsCSS === 'function') {
+            return window.supportsCSS;
+        }
+
+        return function emptySupportCSS(/*property, value*/) {
+            return false;
+        };
+    })(window);
+
+    // Order of popularity, with Opera's prefix having been deprecated
+    var _prefixes = ['Webkit', 'Moz', 'ms', 'O'];
+    var _prefixesCSS = ['-webkit-', '-moz-', '-ms-', '-o-'];
+
+    // Regular expression to convert CSS notation (kebab-case) to DOM notation (camel-case)
     var _reToCamelCase = /(?:-+([^\-]))/g;
 
-    // Convert CSS notation (kebab-case) to DOM notation (camelCase)
-    function toCamelCase(property) {
-        return property.replace(_reToCamelCase, function charToUpper(all, char) {
-            return char.toUpperCase();
-        });
-    }
-
-    // Test the different native APIs for CSS support
-    function checkNativeSupport(property, value) {
-        // Check the standard method first
-        if (window.hasOwnProperty('CSS') && window.CSS.supports) {
-            return window.CSS.supports(property, value);
-        }
-
-        // Check for Opera's native method
-        if (window.supportsCSS) {
-            return window.supportsCSS(property, value);
-        }
-
-        return false;
-    }
-
-    // Determine support by actually applying the property/value
+    // Determine support by applying the property/value
     // as CSS to the test element and checking if the property
     // exists in the style object
-    function canSetProperty(property, camel, value) {
+    function _canSetProperty(property, camel, value) {
         var support = _element.style.hasOwnProperty(camel);
         if (value === 'inherit') {
             return support;
@@ -47,33 +47,40 @@
         return support && _element.style[camel] !== '';
     }
 
+    // Convert CSS notation (kebab-case) to DOM notation (camel-case)
+    function _toCamelCase(property) {
+        return property.replace(_reToCamelCase, function charToUpper(all, char) {
+            return char.toUpperCase();
+        });
+    }
+
     // Define `isStyleSupported` globally
     window.isStyleSupported = function isStyleSupported(property, value) {
-        // If no value is supplied, use "inherit" by default
+        // If no value is specified, then use "inherit" by default
         value = value || 'inherit';
 
-        // Check native methods first
-        var support = checkNativeSupport(property, value);
+        // Check natively first
+        var support = _checkNativeSupport(property, value);
         if (support) {
             return true;
         }
 
-        var camel = toCamelCase(property);
+        var camel = _toCamelCase(property);
+        var length = 0;
+        var capitalized = camel[length++].toUpperCase() + camel.slice(length);
 
-        var index = 0;
-        var capitalized = camel[index++].toUpperCase() + camel.slice(index);
+        length = _prefixes.length;
 
         // Check if the property/value can be applied to an element
-        support = canSetProperty(property, camel, value);
-        var length = _prefixes.length;
+        support = _canSetProperty(property, camel, value);
         while (!support && length--) {
             // We repeat the previous steps here, this time trying
             // each vendor prefix to determine support
-            var prefixed = '-' + _prefixes[length].toLowerCase() + '-' + property;
-            support = checkNativeSupport(prefixed, value);
+            var prefixed = _prefixesCSS[length] + property;
+            support = _checkNativeSupport(prefixed, value);
             if (!support) {
                 camel = _prefixes[length] + capitalized;
-                support = canSetProperty(prefixed, camel, value);
+                support = _canSetProperty(prefixed, camel, value);
             }
         }
 
