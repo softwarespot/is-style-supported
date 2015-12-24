@@ -7,12 +7,11 @@
  * @return {boolean}
  */
 
-(function isStyeSupportedModule(window) {
-    var _element = window.document.createElement('div');
+(function isStyeSupportedModule(window, document) {
+    var _element = document.createElement('div');
 
     // Check the native methods first; otherwise, return a generic function that returns false
     var _checkNativeSupport = (function nativeSupportCSS(window) {
-
         if (window.hasOwnProperty('CSS') && typeof window.CSS.supports === 'function') {
             return window.CSS.supports;
         }
@@ -86,4 +85,4 @@
 
         return support;
     };
-})(window);
+})(window, window.document);
