@@ -21,7 +21,7 @@
             return window.supportsCSS;
         }
 
-        return function emptySupportCSS(/*property, value*/) {
+        return function emptySupportCSS(/* property, value */) {
             return false;
         };
     })(window);
