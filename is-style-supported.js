@@ -24,7 +24,7 @@
         return function emptySupportCSS(/* property, value */) {
             return false;
         };
-    })(window);
+    }(window));
 
     // Order of popularity, with Opera's prefix having been deprecated
     var _prefixes = ['Webkit', 'Moz', 'ms', 'O'];
@@ -85,4 +85,4 @@
 
         return support;
     };
-})(window, window.document);
+}(window, window.document));
